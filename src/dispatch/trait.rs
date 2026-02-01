@@ -96,7 +96,7 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
                     let iter_enum = iter_item.map(|iter_item| {
                         quote! {
                             enum Iter<$($V,)*> { $( $V($V), )* }
-                            impl ::core::iter::Iterator for Iter {
+                            impl<$($V: ::core::iter::Iterator<Item = #iter_item>,)*> ::core::iter::Iterator for Iter<$($V,)*> {
                                 type Item = #iter_item;
 
                                 fn next(&mut self) -> ::core::option::Option<Self::Item> {
