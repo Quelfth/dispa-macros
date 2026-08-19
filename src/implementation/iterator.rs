@@ -9,7 +9,8 @@ pub fn extract_iter_item(r#type: &ReturnType) -> Option<Type> {
             .filter_map(|b| match b {
                 TypeParamBound::Trait(TraitBound {
                     paren_token: None,
-                    modifier: TraitBoundModifier::None,
+                    modifiers: TraitBoundModifiers{..},
+                    maybe: None,
                     lifetimes: None,
                     path,
                 }) => iter_item_from_path(path),

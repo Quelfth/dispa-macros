@@ -1,7 +1,7 @@
 use proclamation::prelude::*;
 
-mod dispatch;
+mod implementation;
 
 macros! {
-    attr dispatch => dispatch::dispatch;
+    attr dispatch => implementation::dispatch;
 }

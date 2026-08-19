@@ -21,7 +21,7 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
                         Signature {
                             constness,
                             asyncness,
-                            unsafety,
+                            safety,
                             abi,
                             ident,
                             generics:
@@ -60,9 +60,15 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
                     };
 
                     match receiver {
-                        FnArg::Receiver(Receiver { self_token, ty, .. }) => {
+                        FnArg::Receiver(Receiver { self_token, kind, .. }) => {
                             args.push(quote! { value });
-                            params.push(quote! { #self_token : #ty })
+
+                            params.push(match kind {
+                                ReceiverKind::Value => quote!{ #self_token },
+                                ReceiverKind::Reference(and, lifetime, _) => quote!{ #and #lifetime #self_token },
+                                ReceiverKind::Typed(colon, r#type) => quote!{ #colon #r#type },
+                                _ => todo!(),
+                            })
                         }
                         FnArg::Typed(arg) => {
                             return Err(Error::new_spanned(
@@ -109,13 +115,13 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
                     });
 
                     sigs.push(quote! {
-                        #constness #asyncness #unsafety fn #ident #generic_params (#(#params,)*) #output #where_clause
+                        #constness #asyncness #safety fn #ident #generic_params (#(#params,)*) #output #where_clause
                     });
                     let mut call = quote! { #r#trait::#ident(#(#args,)*)};
                     if asyncness.is_some() {
                         call = quote! { #call.await }
                     }
-                    if unsafety.is_some() {
+                    if matches!(safety, Safety::Unsafe(_)) {
                         call = quote! { unsafe { #call } }
                     }
                     if iter_enum.is_some() {
