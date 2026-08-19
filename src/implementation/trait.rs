@@ -65,7 +65,7 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
 
                             params.push(match kind {
                                 ReceiverKind::Value => quote!{ #self_token },
-                                ReceiverKind::Reference(and, lifetime, _) => quote!{ #and #lifetime #self_token },
+                                ReceiverKind::Reference(and, lifetime, r#mut) => quote!{ #and #lifetime #r#mut #self_token },
                                 ReceiverKind::Typed(colon, r#type) => quote!{ #colon #r#type },
                                 _ => todo!(),
                             })
