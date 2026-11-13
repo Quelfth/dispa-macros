@@ -40,7 +40,7 @@ pub fn collect_variants(variants: impl IntoIterator<Item = Variant>) -> Result<V
             ));
         }
 
-        vars.push(quote!{#ident (value)});
+        vars.push(quote!{#ident ()});
     }
 
     Ok(vars)
