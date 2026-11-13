@@ -2,7 +2,9 @@ use proclamation::prelude::*;
 
 pub fn dispatch_enum(r#trait: Path, r#enum: ItemEnum) -> Result<TokenStream> {
     let ItemEnum {
-        ident, variants, ..
+        ident,
+        variants,
+        ..
     } = r#enum;
 
     let variants = collect_variants(variants)?;
@@ -16,24 +18,29 @@ pub fn dispatch_enum(r#trait: Path, r#enum: ItemEnum) -> Result<TokenStream> {
     })
 }
 
-pub fn collect_variants(variants: impl IntoIterator<Item = Variant>) -> Result<Vec<Ident>> {
+pub fn collect_variants(variants: impl IntoIterator<Item = Variant>) -> Result<Vec<TokenStream>> {
     let mut vars = Vec::new();
 
     for Variant { ident, fields, .. } in variants {
+        if matches!(fields, Fields::Unit) {
+            vars.push(quote!(#ident [#ident]));
+            continue;
+        }
+
         let Fields::Unnamed(fields) = fields else {
             return Err(Error::new_spanned(
                 fields,
-                "only tuple variants with exactly one field are allowed",
+                "only unit variants and tuple variants with exactly one field are allowed",
             ));
         };
         if fields.unnamed.len() != 1 {
             return Err(Error::new_spanned(
                 fields,
-                "only tuple variants with exactly one field are allowed",
+                "only unit variants and tuple variants with exactly one field are allowed",
             ));
         }
 
-        vars.push(ident);
+        vars.push(quote!{#ident (value)});
     }
 
     Ok(vars)
