@@ -160,12 +160,12 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
 
     Ok(quote! {
         macro_rules! #dunder_macro_name {
-            ($E:ty {$($V:ident $(($value:ident))? $([$($Value:tt)*])?),* $(,)?}) => {
+            ($E:ty {$($V:ident $(($v:vis $value:ident))? $([$($Value:tt)*])?),* $(,)?}) => {
                 impl #r#trait for $E {#(
                     #sigs {
                         #iter_enums
                         match self {$(
-                            Self::$V $(($value))? => {
+                            Self::$V $(($v value))? => {
                                 $(let value = #zst_refs $($Value)*;)?
                                 #calls
                             }
