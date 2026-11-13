@@ -9,10 +9,11 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
         ..
     } = r#trait;
 
-    let (sigs, calls, iter_enums) = {
+    let (sigs, calls, iter_enums, zst_refs) = {
         let mut sigs = Vec::new();
         let mut calls = Vec::new();
         let mut iter_enums = Vec::new();
+        let mut zst_refs = Vec::new();
 
         for item in items {
             match item {
@@ -63,12 +64,19 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
                         FnArg::Receiver(Receiver { self_token, kind, .. }) => {
                             args.push(quote! { value });
 
+                            zst_refs.push(
+                                if let ReceiverKind::Reference(and, _, r#mut) = kind {
+                                    quote!( #and #r#mut )
+                                } else {
+                                    Default::default()
+                                }
+                            );
                             params.push(match kind {
                                 ReceiverKind::Value => quote!{ #self_token },
                                 ReceiverKind::Reference(and, lifetime, r#mut) => quote!{ #and #lifetime #r#mut #self_token },
                                 ReceiverKind::Typed(colon, r#type) => quote!{ #colon #r#type },
                                 _ => todo!(),
-                            })
+                            });
                         }
                         FnArg::Typed(arg) => {
                             return Err(Error::new_spanned(
@@ -143,7 +151,7 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
             }
         }
 
-        (sigs, calls, iter_enums)
+        (sigs, calls, iter_enums, zst_refs)
     };
 
     let mut macro_name = r#trait.clone();
@@ -158,7 +166,7 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
                         #iter_enums
                         match self {$(
                             Self::$V $(($value))? => {
-                                $(let value = $($Value)*;)?
+                                $(let value = #zst_refs $($Value)*;)?
                                 #calls
                             }
                         )*}
