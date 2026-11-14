@@ -166,7 +166,10 @@ pub fn dispatch_trait(r#trait: ItemTrait) -> Result<TokenStream> {
                         #iter_enums
                         match self {$(
                             Self::$V $(($($value)? value))? => {
-                                $(let value = #zst_refs $($Value)*;)?
+                                $(
+                                    const { assert!(::std::mem::size_of::<$($Value)*>() == 0) };
+                                    let value = #zst_refs *::std::boxed::Box::leak(::std::boxed::Box::new($($Value)*));
+                                )?
                                 #calls
                             }
                         )*}
